@@ -1,7 +1,13 @@
-chrome.browserAction.onClicked.addListener(function(tab) {
+const WA_WEB_URL = 'https://web.whatsapp.com'
+
+chrome.browserAction.onClicked.addListener(function(currentTab) {
   console.log('browserAction');
 
-  chrome.tabs.create({ url: 'https://web.whatsapp.com/' }, sendMessageOnWaTab)
+  if (currentTab && currentTab.url.includes(WA_WEB_URL)) {
+    sendMessageOnWaTab(currentTab)
+  } else {
+    chrome.tabs.create({ url: WA_WEB_URL }, sendMessageOnWaTab)
+  }
 });
 
 function sendMessageOnWaTab(waTab) {

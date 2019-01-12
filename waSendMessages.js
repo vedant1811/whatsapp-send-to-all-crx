@@ -1,36 +1,43 @@
 const SEARCH_DELAY = 100; // in ms
-const CHAT_BOX_SELECTOR = '#main';
+const CHAT_BOX_SELECTOR = 'div._2S1VP.copyable-text.selectable-text';
 const PHONE_INVALID_SELECTOR = '._3lLzD';
 const MESSAGE_SENDING_SELECTOR = '[data-icon="msg-time"]';
 const MESSAGE_SENT_SELECTOR = '[data-icon="msg-dblcheck-ack"]';
+
+// Selects only user chats (not group chats)
+const USER_CHAT_NAME_SPAN_SELECTOR = '._25Ooe > ._3TEwt > ._1wjpf';
+
 const DEBUG = true;
+if (DEBUG) {
+  const sent = [];
+}
 
 console.log('waSendInBg');
 
-async function loopOverChats() {
-
+async function sendMessagesToAll() {
+  nameSpans = document.querySelectorAll(USER_CHAT_NAME_SPAN_SELECTOR)
+  for (nameSpan of nameSpans) {
+    await openAndSend(nameSpan);
+  }
 }
 
-async function sendMessage() {
-  const createdSelector = await resolveFirst(
-    waitForSelectorToBeAdded(CHAT_BOX_SELECTOR),
-    waitForPhoneInvalid()
-  );
+async function openAndSend(nameSpan) {
+  await openChat(nameSpan);
 
-  switch (createdSelector) {
-    case CHAT_BOX_SELECTOR:
-      if (DEBUG) {
-        document.querySelector('._35EW6').click();
-        await waitForSelectorToBeAdded(MESSAGE_SENDING_SELECTOR);
-        await waitForSelectorToBeRemoved(MESSAGE_SENDING_SELECTOR);
-      } else {
+  await send1Message(getMessage1(nameSpan.textContent));
+  await send1Message("For calls and whatsapp");
+}
 
-      }
-      return 'sent';
-    case PHONE_INVALID_SELECTOR:
-      return 'phone_invalid';
-    default:
-      throw `connot understand ${createdSelector}`;
+async function send1Message(message) {
+  const chatBox = document.querySelector(CHAT_BOX_SELECTOR);
+  chatBox.textContent = message;
+
+  if (DEBUG) {
+    console.log(`skipping message ${message}`);
+  } else {
+    document.querySelector('._35EW6').click();
+    await waitForSelectorToBeAdded(MESSAGE_SENDING_SELECTOR);
+    await waitForSelectorToBeRemoved(MESSAGE_SENDING_SELECTOR);
   }
 }
 
@@ -66,3 +73,23 @@ function waitFor(predicate) {
 }
 
 // WA web utils, pirated from https://github.com/akhilerm/Infiny
+function triggerMouseEvent(node, eventType) {
+  var event = document.createEvent('MouseEvents');
+  event.initEvent(eventType, true, true);
+  node.dispatchEvent(event);
+}
+
+async function openChat(nameSpan) {
+  triggerMouseEvent(nameSpan, "mousedown");
+  await waitForSelectorToBeAdded(CHAT_BOX_SELECTOR);
+}
+
+function getMessage1(name) {
+  const firstName = name.split(' ')[0];
+
+  return `Hey ${firstName}. This is my new singapore number`;
+}
+
+(async function() {
+  sendMessagesToAll();
+}());

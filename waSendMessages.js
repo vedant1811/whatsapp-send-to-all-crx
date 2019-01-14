@@ -1,4 +1,5 @@
 const SEARCH_DELAY = 100; // in ms
+const NOT_START_WITH_DIGIT_OR_PLUS = /^[^+\d].*$/;
 const CHAT_BOX_SELECTOR = 'div._2S1VP.copyable-text.selectable-text';
 const PHONE_INVALID_SELECTOR = '._3lLzD';
 const MESSAGE_SENDING_SELECTOR = '[data-icon="msg-time"]';
@@ -15,23 +16,40 @@ if (DEBUG) {
 console.log('waSendInBg');
 
 async function sendMessagesToAll() {
+  const chatList = document.getElementById('pane-side');
+  scrollToTop(chatList);
+  while (!hasScrolledToBottom(chatList)) {
+    await sendToAllInView();
+    await pageDown(chatList);
+  }
   await sendToAllInView();
 }
 
 async function sendToAllInView() {
+  console.log('sendToAllInView ============');
   nameSpans = document.querySelectorAll(USER_CHAT_NAME_SPAN_SELECTOR)
   for (nameSpan of nameSpans) {
     await sendIfNeeded(nameSpan);
   }
+  console.log('============ sendToAllInView');
 }
 
 async function sendIfNeeded(nameSpan) {
-  if (!sent.includes(nameSpan.textContent)) {
+  if (shouldSend(nameSpan)) {
     await openAndSend(nameSpan);
     saveSentTo(nameSpan);
   } else {
+    // also skips contacts with the exact same name; happens especially in contacts with multiple numbers
+
     console.log(`skipping ${nameSpan.textContent}`);
   }
+}
+
+function shouldSend(nameSpan) {
+  const text = nameSpan.textContent;
+  return !sent.includes(text)
+      && NOT_START_WITH_DIGIT_OR_PLUS.test(text)
+      ;
 }
 
 function saveSentTo(nameSpan) {
@@ -51,9 +69,8 @@ async function send1Message(message) {
   const chatBox = document.querySelector(CHAT_BOX_SELECTOR);
   chatBox.textContent = message;
 
-  if (DEBUG) {
-    console.log(`skipping message ${message}`);
-  } else {
+  console.log(`sending message ${message}`);
+  if (!DEBUG) {
     document.querySelector('._35EW6').click();
     await waitForSelectorToBeAdded(MESSAGE_SENDING_SELECTOR);
     await waitForSelectorToBeRemoved(MESSAGE_SENDING_SELECTOR);
@@ -107,6 +124,23 @@ function getMessage1(name) {
   const firstName = name.split(' ')[0];
 
   return `Hey ${firstName}. This is my new singapore number`;
+}
+
+async function pageDown(element) {
+  element.scrollBy(0, element.clientHeight);
+  await sleep(100);
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function hasScrolledToBottom(element) {
+  return element.scrollTop + element.clientHeight == element.scrollHeight;
+}
+
+function scrollToTop(element) {
+  return element.scrollTop = 0;
 }
 
 (async function() {

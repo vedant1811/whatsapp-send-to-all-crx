@@ -9,16 +9,35 @@ const USER_CHAT_NAME_SPAN_SELECTOR = '._25Ooe > ._3TEwt > ._1wjpf';
 
 const DEBUG = true;
 if (DEBUG) {
-  const sent = [];
+  var sent = [];
 }
 
 console.log('waSendInBg');
 
 async function sendMessagesToAll() {
+  await sendToAllInView();
+}
+
+async function sendToAllInView() {
   nameSpans = document.querySelectorAll(USER_CHAT_NAME_SPAN_SELECTOR)
   for (nameSpan of nameSpans) {
-    await openAndSend(nameSpan);
+    await sendIfNeeded(nameSpan);
   }
+}
+
+async function sendIfNeeded(nameSpan) {
+  if (!sent.includes(nameSpan.textContent)) {
+    await openAndSend(nameSpan);
+    saveSentTo(nameSpan);
+  } else {
+    console.log(`skipping ${nameSpan.textContent}`);
+  }
+}
+
+function saveSentTo(nameSpan) {
+  if (DEBUG) {
+    sent.push(nameSpan.textContent)
+  } // TODO: else:
 }
 
 async function openAndSend(nameSpan) {

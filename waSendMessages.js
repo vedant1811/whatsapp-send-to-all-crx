@@ -8,6 +8,8 @@ const MESSAGE_SENT_SELECTOR = '[data-icon="msg-dblcheck-ack"]';
 // Selects only user chats (not group chats)
 const USER_CHAT_NAME_SPAN_SELECTOR = '._25Ooe > ._3TEwt > ._1wjpf';
 
+const TITLES = ['aunty', 'uncle', 'sir', 'dr', 'mama', 'mami', 'bhua', 'didi', 'bhaiya']
+
 const DEBUG = true;
 if (DEBUG) {
   var sent = [];
@@ -121,9 +123,11 @@ async function openChat(nameSpan) {
 }
 
 function getMessage1(name) {
-  const firstName = name.split(' ')[0];
+  const displayName =
+      TITLES.find(title => name.toLowerCase().includes(title))
+      || name.split(' ')[0];
 
-  return `Hey ${firstName}. This is my new singapore number`;
+  return `Hey ${displayName}. This is my new singapore number`;
 }
 
 async function pageDown(element) {

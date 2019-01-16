@@ -8,7 +8,8 @@ const MESSAGE_SENT_SELECTOR = '[data-icon="msg-dblcheck-ack"]';
 // Selects only user chats (not group chats)
 const USER_CHAT_NAME_SPAN_SELECTOR = '._25Ooe > ._3TEwt > ._1wjpf';
 
-const TITLES = ['aunty', 'uncle', 'sir', 'dr', 'mama', 'mami', 'bhua', 'didi', 'bhaiya']
+const TITLES = ['aunty', 'uncle', 'sir', 'dr', 'mama', 'mami', 'bhua', 'didi', 'bhaiya'];
+const NEW_NO_KEY = 'new_no';
 
 const DEBUG = true;
 if (DEBUG) {
@@ -37,9 +38,9 @@ async function sendToAllInView() {
 }
 
 async function sendIfNeeded(nameSpan) {
-  if (shouldSend(nameSpan)) {
+  if (await shouldSend(nameSpan)) {
     await openAndSend(nameSpan);
-    saveSentTo(nameSpan);
+    saveSentTo(nameSpan.textContent);
   } else {
     // also skips contacts with the exact same name; happens especially in contacts with multiple numbers
 
@@ -47,17 +48,37 @@ async function sendIfNeeded(nameSpan) {
   }
 }
 
-function shouldSend(nameSpan) {
+async function shouldSend(nameSpan) {
   const text = nameSpan.textContent;
-  return !sent.includes(text)
+  return !(await wasSentTo(name))
       && NOT_START_WITH_DIGIT_OR_PLUS.test(text)
+      // && text === 'Mayank Jha'
       ;
 }
 
-function saveSentTo(nameSpan) {
+function saveSentTo(name) {
   if (DEBUG) {
-    sent.push(nameSpan.textContent)
-  } // TODO: else:
+    sent.push(name);
+  } else {
+    chrome.storage.local.set({ [name]: NEW_NO_KEY }, function() {
+      console.log('Value is set to ' + array);
+    });
+  }
+}
+
+function wasSentTo(name) {
+  return new Promise(resolve => {
+    if (DEBUG) {
+      resolve(sent.includes(name));
+    } else {
+      chrome.storage.sync.get([name], function(result) {
+        console.log('got value:');
+        console.log(result);
+
+        resolve(!!result[name]);
+      });
+    }
+  });
 }
 
 async function openAndSend(nameSpan) {

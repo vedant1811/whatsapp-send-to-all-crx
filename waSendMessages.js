@@ -4,24 +4,29 @@ const CHAT_BOX_SELECTOR = 'div._2S1VP.copyable-text.selectable-text';
 const PHONE_INVALID_SELECTOR = '._3lLzD';
 const MESSAGE_SENDING_SELECTOR = '[data-icon="msg-time"]';
 const MESSAGE_SENT_SELECTOR = '[data-icon="msg-dblcheck-ack"]';
-
-// Selects only user chats (not group chats)
-const USER_CHAT_NAME_SPAN_SELECTOR = '._25Ooe > ._3TEwt > ._1wjpf';
+const USER_CHAT_NAME_SPAN_SELECTOR = '._25Ooe ._1wjpf';
+const OVERFLOW_MENU_SELECTOR = '[data-icon="menu"]';
+const MENU_LIST_SELECTOR = 'ul._3s1D4';
 
 const TITLES = ['aunty', 'uncle', 'sir', 'dr', 'mama', 'mami', 'nana', 'nani', 'bhua', 'didi', 'bhaiya'];
 const NEW_NO_KEY = 'new_no';
 
-const DEBUG = false;
+const DEBUG = true;
 
 console.log('waSendInBg');
 
 async function sendMessagesToAll() {
   const chatList = document.getElementById('pane-side');
   scrollToTop(chatList);
-  // while (!hasScrolledToBottom(chatList)) {
-  //   await sendToAllInView();
-  //   await pageDown(chatList);
-  // }
+  var i = 0;
+  while (!hasScrolledToBottom(chatList)) {
+    if (DEBUG && i >= 3) {
+      break;
+    }
+    await sendToAllInView();
+    await pageDown(chatList);
+    i++;
+  }
   await sendToAllInView();
 }
 
@@ -41,21 +46,23 @@ async function sendIfNeeded(nameSpan) {
   } else {
     // also skips contacts with the exact same name; happens especially in contacts with multiple numbers
 
-    console.log(`skipping ${nameSpan.textContent}`);
+    console.log(`[sendIfNeeded] skipping ${nameSpan.textContent}`);
   }
 }
 
 async function shouldSend(nameSpan) {
   const name = nameSpan.textContent;
-  return
-      // !(await wasSentTo(name)) &&
-      // NOT_START_WITH_DIGIT_OR_PLUS.test(name) &&
+  return !(await wasSentTo(name)) &&
+      NOT_START_WITH_DIGIT_OR_PLUS.test(name);
       // name === 'Mayank Jha'
-      name === 'Manasi Agrawal'
-      ;
+      // name === 'Manasi Agrawal';
 }
 
 function saveSentTo(name) {
+  if (DEBUG) {
+    return;
+  }
+
   chrome.storage.local.set({ [name]: NEW_NO_KEY }, function() {
     console.log('Value is set to ' + array);
   });
@@ -64,9 +71,6 @@ function saveSentTo(name) {
 function wasSentTo(name) {
   return new Promise(resolve => {
     chrome.storage.sync.get([name], function(result) {
-      console.log('got value:');
-      console.log(result);
-
       resolve(!!result[name]);
     });
   });
@@ -75,8 +79,24 @@ function wasSentTo(name) {
 async function openAndSend(nameSpan) {
   await openChat(nameSpan);
 
+  // if (!(await isContactChat())) {
+  //   console.log(`Skipping Group chat: ${nameSpan.textContent}`);
+  //   return;
+  // }
+
   await send1Message(getMessage1(nameSpan.textContent));
   await send1Message("For calls and whatsapp");
+}
+
+// as opposed to group chat
+async function isContactChat() {
+  await waitForSelectorToBeAdded(OVERFLOW_MENU_SELECTOR);
+  const menu = document.querySelector(OVERFLOW_MENU_SELECTOR);
+  menu.click();
+
+  await waitForSelectorToBeAdded(MENU_LIST_SELECTOR);
+  const menuList = menu.querySelector(MENU_LIST_SELECTOR);
+  return menuList.textContent.includes('Contact info');
 }
 
 async function send1Message(message) {

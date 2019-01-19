@@ -8,23 +8,20 @@ const MESSAGE_SENT_SELECTOR = '[data-icon="msg-dblcheck-ack"]';
 // Selects only user chats (not group chats)
 const USER_CHAT_NAME_SPAN_SELECTOR = '._25Ooe > ._3TEwt > ._1wjpf';
 
-const TITLES = ['aunty', 'uncle', 'sir', 'dr', 'mama', 'mami', 'bhua', 'didi', 'bhaiya'];
+const TITLES = ['aunty', 'uncle', 'sir', 'dr', 'mama', 'mami', 'nana', 'nani', 'bhua', 'didi', 'bhaiya'];
 const NEW_NO_KEY = 'new_no';
 
-const DEBUG = true;
-if (DEBUG) {
-  var sent = [];
-}
+const DEBUG = false;
 
 console.log('waSendInBg');
 
 async function sendMessagesToAll() {
   const chatList = document.getElementById('pane-side');
   scrollToTop(chatList);
-  while (!hasScrolledToBottom(chatList)) {
-    await sendToAllInView();
-    await pageDown(chatList);
-  }
+  // while (!hasScrolledToBottom(chatList)) {
+  //   await sendToAllInView();
+  //   await pageDown(chatList);
+  // }
   await sendToAllInView();
 }
 
@@ -49,35 +46,29 @@ async function sendIfNeeded(nameSpan) {
 }
 
 async function shouldSend(nameSpan) {
-  const text = nameSpan.textContent;
-  return !(await wasSentTo(name))
-      && NOT_START_WITH_DIGIT_OR_PLUS.test(text)
-      // && text === 'Mayank Jha'
+  const name = nameSpan.textContent;
+  return
+      // !(await wasSentTo(name)) &&
+      // NOT_START_WITH_DIGIT_OR_PLUS.test(name) &&
+      // name === 'Mayank Jha'
+      name === 'Manasi Agrawal'
       ;
 }
 
 function saveSentTo(name) {
-  if (DEBUG) {
-    sent.push(name);
-  } else {
-    chrome.storage.local.set({ [name]: NEW_NO_KEY }, function() {
-      console.log('Value is set to ' + array);
-    });
-  }
+  chrome.storage.local.set({ [name]: NEW_NO_KEY }, function() {
+    console.log('Value is set to ' + array);
+  });
 }
 
 function wasSentTo(name) {
   return new Promise(resolve => {
-    if (DEBUG) {
-      resolve(sent.includes(name));
-    } else {
-      chrome.storage.sync.get([name], function(result) {
-        console.log('got value:');
-        console.log(result);
+    chrome.storage.sync.get([name], function(result) {
+      console.log('got value:');
+      console.log(result);
 
-        resolve(!!result[name]);
-      });
-    }
+      resolve(!!result[name]);
+    });
   });
 }
 
@@ -97,6 +88,8 @@ async function send1Message(message) {
     document.querySelector('._35EW6').click();
     await waitForSelectorToBeAdded(MESSAGE_SENDING_SELECTOR);
     await waitForSelectorToBeRemoved(MESSAGE_SENDING_SELECTOR);
+  } else {
+    await sleep(100);
   }
 }
 

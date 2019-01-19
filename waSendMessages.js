@@ -13,7 +13,7 @@ const MENU_LIST_SELECTOR = 'ul._3s1D4';
 const TITLES = ['aunty', 'uncle', 'sir', 'dr', 'mama', 'mami', 'nana', 'nani', 'bhua', 'didi', 'bhaiya'];
 const NEW_NO_KEY = 'new_no';
 
-const DEBUG = true;
+const DEBUG = false;
 
 console.log('waSendInBg');
 
@@ -22,7 +22,7 @@ async function sendMessagesToAll() {
   scrollToTop(chatList);
   var i = 0;
   while (!hasScrolledToBottom(chatList)) {
-    if (DEBUG && i >= 1) {
+    if (DEBUG && i >= 0) {
       break;
     }
     await sendToAllInView();
@@ -55,9 +55,8 @@ async function sendIfNeeded(nameSpan) {
 async function shouldSend(nameSpan) {
   const name = nameSpan.textContent;
   return !(await wasSentTo(name)) &&
-      NOT_START_WITH_DIGIT_OR_PLUS.test(name);
-      // name === 'Mayank Jha'
-      // name === 'Manasi Agrawal';
+  //     NOT_START_WITH_DIGIT_OR_PLUS.test(name);
+        name === '+91 88849 15715';
 }
 
 function saveSentTo(name) {
@@ -66,13 +65,14 @@ function saveSentTo(name) {
   }
 
   chrome.storage.local.set({ [name]: NEW_NO_KEY }, function() {
-    console.log('Value is set to ' + array);
+    console.log('saveSentTo is set for ' + name);
   });
 }
 
 function wasSentTo(name) {
   return new Promise(resolve => {
     chrome.storage.sync.get([name], function(result) {
+      console.log(`[wasSentTo] ${name}:${result[name]}`);
       resolve(!!result[name]);
     });
   });
@@ -104,9 +104,10 @@ async function isContactChat() {
 async function send1Message(message) {
   const chatBox = document.querySelector(CHAT_BOX_SELECTOR);
   chatBox.textContent = message;
+  chatBox.dispatchEvent(new Event('input', {bubbles: true}));
 
   console.log(`sending message ${message}`);
-  if (!DEBUG) {
+  if (DEBUG) {
     document.querySelector('._35EW6').click();
     await waitForSelectorToBeAdded(MESSAGE_SENDING_SELECTOR);
     await waitForSelectorToBeRemoved(MESSAGE_SENDING_SELECTOR);

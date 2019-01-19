@@ -1,11 +1,13 @@
 const SEARCH_DELAY = 100; // in ms
 const NOT_START_WITH_DIGIT_OR_PLUS = /^[^+\d].*$/;
+const MOUSE_DOWN_EVENT = 'mousedown';
+
 const CHAT_BOX_SELECTOR = 'div._2S1VP.copyable-text.selectable-text';
 const PHONE_INVALID_SELECTOR = '._3lLzD';
 const MESSAGE_SENDING_SELECTOR = '[data-icon="msg-time"]';
 const MESSAGE_SENT_SELECTOR = '[data-icon="msg-dblcheck-ack"]';
 const USER_CHAT_NAME_SPAN_SELECTOR = '._25Ooe ._1wjpf';
-const OVERFLOW_MENU_SELECTOR = '[data-icon="menu"]';
+const OVERFLOW_MENU_SELECTOR = '#main [data-icon="menu"]';
 const MENU_LIST_SELECTOR = 'ul._3s1D4';
 
 const TITLES = ['aunty', 'uncle', 'sir', 'dr', 'mama', 'mami', 'nana', 'nani', 'bhua', 'didi', 'bhaiya'];
@@ -20,7 +22,7 @@ async function sendMessagesToAll() {
   scrollToTop(chatList);
   var i = 0;
   while (!hasScrolledToBottom(chatList)) {
-    if (DEBUG && i >= 3) {
+    if (DEBUG && i >= 1) {
       break;
     }
     await sendToAllInView();
@@ -79,10 +81,10 @@ function wasSentTo(name) {
 async function openAndSend(nameSpan) {
   await openChat(nameSpan);
 
-  // if (!(await isContactChat())) {
-  //   console.log(`Skipping Group chat: ${nameSpan.textContent}`);
-  //   return;
-  // }
+  if (!(await isContactChat())) {
+    console.log(`Skipping Group chat: ${nameSpan.textContent}`);
+    return;
+  }
 
   await send1Message(getMessage1(nameSpan.textContent));
   await send1Message("For calls and whatsapp");
@@ -92,10 +94,10 @@ async function openAndSend(nameSpan) {
 async function isContactChat() {
   await waitForSelectorToBeAdded(OVERFLOW_MENU_SELECTOR);
   const menu = document.querySelector(OVERFLOW_MENU_SELECTOR);
-  menu.click();
+  triggerMouseEvent(menu, MOUSE_DOWN_EVENT);
 
   await waitForSelectorToBeAdded(MENU_LIST_SELECTOR);
-  const menuList = menu.querySelector(MENU_LIST_SELECTOR);
+  const menuList = document.querySelector(MENU_LIST_SELECTOR);
   return menuList.textContent.includes('Contact info');
 }
 
@@ -152,7 +154,7 @@ function triggerMouseEvent(node, eventType) {
 }
 
 async function openChat(nameSpan) {
-  triggerMouseEvent(nameSpan, "mousedown");
+  triggerMouseEvent(nameSpan, MOUSE_DOWN_EVENT);
   await waitForSelectorToBeAdded(CHAT_BOX_SELECTOR);
 }
 

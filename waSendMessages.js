@@ -55,8 +55,8 @@ async function sendIfNeeded(nameSpan) {
 async function shouldSend(nameSpan) {
   const name = nameSpan.textContent;
   return !(await wasSentTo(name)) &&
-  //     NOT_START_WITH_DIGIT_OR_PLUS.test(name);
-        name === '+91 88849 15715';
+      NOT_START_WITH_DIGIT_OR_PLUS.test(name);
+        // name === '+91 88849 15715';
 }
 
 function saveSentTo(name) {
